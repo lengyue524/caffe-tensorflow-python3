@@ -75,6 +75,8 @@ class DataInjector(object):
         squeeze_indices = [1]  # Squeeze biases.
         if node.kind == NodeKind.InnerProduct:
             squeeze_indices.append(0)  # Squeeze FC.
+        if len(data) == 1: # PReLU data length = 1
+            squeeze_indices = [0]
         for idx in squeeze_indices:
             data[idx] = np.squeeze(data[idx])
         return data
@@ -205,6 +207,20 @@ class ReLUFuser(SubNodeFuser):
     def merge(self, parent, _):
         parent.metadata['relu'] = True
 
+class PReLUFuser(SubNodeFuser):
+    """ Fuses parametric rectified linear units with their parent nodes.
+        See ReLUFuser as reference
+    """
+
+    def __init__(self, allowed_parent_types=None):
+        self.allowed_parent_types = allowed_parent_types
+
+    def is_eligible_pair(self, parent, child):
+        return ((self.allowed_parent_types is None or parent.kind in self.allowed_parent_types) and
+                child.kind == NodeKind.PReLU)
+
+    def merge(self, parent, _):
+        parent.metadata['prelu'] = True
 
 class BatchNormScaleBiasFuser(SubNodeFuser):
     '''
@@ -282,6 +298,27 @@ class ParameterNamer(object):
                 names = ('mean', 'variance')
                 if len(node.data) == 4:
                     names += ('scale', 'offset')
+            elif node.kind == NodeKind.PReLU:
+                names = ('weights',)
+                # TODO Not sure how to handle PReLUParameter shapes
+                # Missing example caffe model to test
+                # https://caffe.berkeleyvision.org/tutorial/layers/prelu.html
+
+                continue
+                # optional FillerParameter filler = 1;
+                if node.parameters.filler:  # caffe_pb2.FillerParameter
+                    print(node.parameters.filler.type)
+                    print(node.parameters.filler.value)
+                    print(node.parameters.filler.min)
+                    print(node.parameters.filler.max)
+                    print(node.parameters.filler.mean)
+                    print(node.parameters.filler.std)
+                    print(node.parameters.filler.sparse)
+                    print(node.parameters.filler.variance_norm)
+
+                # optional bool channel_shared = 2 [default = false];
+                if node.parameters.channel_shared:  # type bool
+                    print(node.parameters.channel_shared)
             else:
                 print_stderr('WARNING: Unhandled parameters: {}'.format(node.kind))
                 continue

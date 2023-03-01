@@ -3,7 +3,7 @@ import numpy as np
 from ..errors import KaffeError, print_stderr
 from ..graph import GraphBuilder, NodeMapper
 from ..layers import NodeKind
-from ..transformers import (DataInjector, DataReshaper, NodeRenamer, ReLUFuser,
+from ..transformers import (DataInjector, DataReshaper, NodeRenamer, ReLUFuser, PReLUFuser,
                             BatchNormScaleBiasFuser, BatchNormPreprocessor, ParameterNamer)
 
 from . import network
@@ -69,6 +69,8 @@ class MaybeActivated(object):
         self.inject_kwargs = {}
         if node.metadata.get('relu', False) != default:
             self.inject_kwargs['relu'] = not default
+        if node.metadata.get('prelu'):
+            self.inject_kwargs['prelu'] = node.metadata.get('prelu')
 
     def __call__(self, *args, **kwargs):
         kwargs.update(self.inject_kwargs)
@@ -103,6 +105,9 @@ class TensorFlowMapper(NodeMapper):
 
     def map_relu(self, node):
         return TensorFlowNode('relu')
+
+    def map_prelu(self, node):
+        return TensorFlowNode('prelu')
 
     def map_pooling(self, node):
         pool_type = node.parameters.pool
@@ -263,7 +268,10 @@ class TensorFlowTransformer(object):
                     NodeKind.Convolution: (2, 3, 1, 0),
 
                     # (c_o, c_i) -> (c_i, c_o)
-                    NodeKind.InnerProduct: (1, 0)
+                    NodeKind.InnerProduct: (1, 0),
+
+                    # one dimensional
+                    NodeKind.PReLU: (0)
                 }),
 
                 # Pre-process batch normalization data

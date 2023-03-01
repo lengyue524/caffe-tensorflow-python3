@@ -1,9 +1,11 @@
 import sys
-
+from google.protobuf import message_factory
+from . import caffe_pb2
 SHARED_CAFFE_RESOLVER = None
 
 class CaffeResolver(object):
     def __init__(self):
+        self.message_classes = message_factory.MessageFactory()
         self.import_caffe()
 
     def import_caffe(self):
@@ -21,7 +23,9 @@ class CaffeResolver(object):
             # Use the protobuf code from the imported distribution.
             # This way, Caffe variants with custom layers will work.
             self.caffepb = self.caffe.proto.caffe_pb2
-        self.NetParameter = self.caffepb.NetParameter
+            self.NetParameter = self.caffepb.NetParameter
+        else:
+            self.NetParameter = self.message_classes.GetPrototype(descriptor=caffe_pb2.NETPARAMETER)
 
     def has_pycaffe(self):
         return self.caffe is not None

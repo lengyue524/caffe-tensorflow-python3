@@ -1,3 +1,10 @@
+# self usage for openpose caffe model convert
+
+## lib version 
+tensorflow                   2.11.0
+protobuf                     3.19.6
+If libs update, convert should update to support
+
 # Caffe to TensorFlow
 
 Convert [Caffe](https://github.com/BVLC/caffe/) models to [TensorFlow](https://github.com/tensorflow/tensorflow).

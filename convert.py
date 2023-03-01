@@ -28,7 +28,7 @@ def validate_arguments(args):
 
 def convert(def_path, caffemodel_path, data_output_path, code_output_path, standalone_output_path, phase):
     try:
-        sess = tf.InteractiveSession()
+        sess = tf.compat.v1.InteractiveSession()
         transformer = TensorFlowTransformer(def_path, caffemodel_path, phase=phase)
         print_stderr('Converting data...')
         if data_output_path is not None:

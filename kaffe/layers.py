@@ -38,6 +38,7 @@ LAYER_DESCRIPTORS = {
     'Pooling': shape_pool,
     'Power': shape_identity,
     'ReLU': shape_identity,
+    'PReLU': shape_identity,
     'Scale': shape_identity,
     'Sigmoid': shape_identity,
     'SigmoidCrossEntropyLoss': shape_scalar,
@@ -81,7 +82,7 @@ class NodeDispatch(object):
 
     @staticmethod
     def get_handler_name(node_kind):
-        if len(node_kind) <= 4:
+        if len(node_kind) <= 4 or node_kind == 'PReLU':
             # A catch-all for things like ReLU and tanh
             return node_kind.lower()
         # Convert from CamelCase to under_scored
